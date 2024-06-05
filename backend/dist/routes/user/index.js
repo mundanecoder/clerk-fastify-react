@@ -8,10 +8,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const sayHello_1 = require("../../controllers/user/sayHello");
-const User = (fastify, opts) => __awaiter(void 0, void 0, void 0, function* () {
-    (0, sayHello_1.sayHello)(fastify);
-});
+const AuthHook_1 = __importDefault(require("../../fastify-hooks/AuthHook"));
+const User = function (fastify, opts) {
+    return __awaiter(this, void 0, void 0, function* () {
+        fastify.addHook("preHandler", (0, AuthHook_1.default)(fastify));
+        (0, sayHello_1.sayHello)(fastify);
+    });
+};
 exports.default = User;
 //# sourceMappingURL=index.js.map

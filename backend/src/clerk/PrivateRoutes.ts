@@ -1,29 +1,30 @@
+// import "../loadEnv";
+
 import { FastifyPluginCallback } from "fastify";
-import { clerkClient, clerkPlugin, getAuth, verifyToken } from "@clerk/fastify";
+import { createClerkClient, clerkPlugin, getAuth } from "@clerk/fastify";
+
+const clerkOptions = {
+  publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
+  secretKey: process.env.CLERK_SECRET_KEY,
+};
+
+console.log(clerkOptions);
 
 const protectedRoutes: FastifyPluginCallback = (instance, opts, done) => {
-  instance.register(clerkPlugin, {
-    publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
-    secretKey: process.env.CLERK_SECRET_KEY,
-  });
+  instance.register(clerkPlugin, clerkOptions);
+  const clerkClient = createClerkClient(clerkOptions);
 
   instance.get("/private", async (request, reply) => {
-    const token = request.headers.authorization?.replace("Bearer ", "");
-
-    if (!token) {
-      return reply.code(401).send({ error: "Unauthorized: Missing token" });
-    }
     try {
-      console.log(token[8], "check !");
-      const { getToken } = getAuth(request);
+      // const { userId } = getAuth(request);
 
-      const response = await getToken();
-      // console.log("Extracted userId:", userId);
+      // const user = userId ? await clerkClient.users.getUser(userId) : null;
 
-      // if (!userId) {
-      //   return reply.code(401).send({ error: "Unauthorized: Invalid token" });
-      // }
-      console.log(response, "check 2");
+      // console.log(user);
+
+      // return { user };
+
+      return { message: "hello" };
     } catch (error) {
       return reply.code(500).send({ error: "Failed to fetch user data" });
     }

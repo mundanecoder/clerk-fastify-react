@@ -14,8 +14,9 @@ function sayHello(fastify) {
     fastify.get("/", {
         schema: {},
     }, (req, res) => __awaiter(this, void 0, void 0, function* () {
-        const message = "it is working amazingly fine are you sure!";
-        return res.status(200).send({ message: message });
+        // const message: string = "it is working amazingly fine are you sure!";
+        const userdata = req.user;
+        return res.status(200).send({ data: userdata });
     }));
 }
 exports.sayHello = sayHello;

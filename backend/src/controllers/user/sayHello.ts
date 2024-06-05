@@ -7,9 +7,11 @@ export function sayHello(fastify: FastifyInstance) {
       schema: {},
     },
     async (req: FastifyRequest, res: FastifyReply) => {
-      const message: string = "it is working amazingly fine are you sure!";
+      // const message: string = "it is working amazingly fine are you sure!";
 
-      return res.status(200).send({ message: message });
+      const userdata = req.user;
+
+      return res.status(200).send({ data: userdata });
     }
   );
 }

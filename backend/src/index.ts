@@ -3,10 +3,18 @@ import connectToDb from "./database/db";
 import autoLoad from "@fastify/autoload";
 import fastifyCors from "@fastify/cors";
 import { join } from "path";
-import { clerkClient, clerkPlugin, getAuth, verifyToken } from "@clerk/fastify";
+import { clerkPlugin, getAuth } from "@clerk/fastify";
+import Swagger from "@fastify/swagger";
+import SwaggerUI from "@fastify/swagger-ui";
+import chemaConfig from "./swaggerconfig";
 import * as dotenv from "dotenv";
+import swaggerConfig from "./swaggerconfig";
 
 dotenv.config();
+const clerkOptions = {
+  publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
+  secretKey: process.env.CLERK_SECRET_KEY,
+};
 
 const envToLogger = {
   development: {
@@ -22,11 +30,32 @@ const envToLogger = {
   test: false,
 };
 
-const environment: string = "development"; // Replace "development" with the actual environment value
+const environment: string = "development";
+const schemaConfig = {
+  schema: {
+    description: "This returns jokes",
+    tags: ["JOKE"],
+    summary: "This returns a different joke every time this is called",
+    operationId: "get-joke",
+    response: {
+      200: {
+        description: "Successful Response",
+        type: "object",
+        properties: {
+          joke: { type: "string" },
+        },
+      },
+    },
+  },
+};
 
 const fastify = Fastify({
   logger: envToLogger[environment as keyof typeof envToLogger] ?? true,
 });
+
+fastify.register(clerkPlugin, clerkOptions);
+fastify.register(Swagger, swaggerConfig);
+fastify.register(SwaggerUI);
 
 fastify.register(fastifyCors, {
   allowedHeaders: "*",
@@ -37,35 +66,11 @@ fastify.register(autoLoad, {
   dir: join(__dirname, "./routes"),
 });
 
-const clerkOptions = {
-  publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
-  secretKey: process.env.CLERK_SECRET_KEY,
-};
-fastify.register(clerkPlugin, clerkOptions);
+// fastify.register(autoLoad, {
+//   dir: join(__dirname, './plugins'),
+// });
 
 connectToDb();
-
-fastify.get("/private", async (req, res) => {
-  const token = req.headers.authorization?.replace("Bearer ", "");
-
-  // console.log(req.headers.authorization);
-
-  if (!token)
-    return res.status(401).send({
-      message: "unauthorized",
-    });
-  try {
-    const verifiedToken = await verifyToken(token, {
-      apiUrl: "https://api.clerk.com",
-      secretKey: process.env.CLERK_SECRET_KEY,
-      jwtKey: process.env.CLERK_PEM_PUBLIC_KEY,
-      audience: process.env.CLERK_PUBLISHABLE_KEY,
-    });
-    return { verifiedToken: verifiedToken };
-  } catch (error) {
-    console.log("error", error);
-  }
-});
 
 fastify.get("/ping", async (request, reply) => {
   return reply.send({ message: "ping" });

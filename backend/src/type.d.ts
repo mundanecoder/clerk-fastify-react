@@ -3,7 +3,7 @@ import "@fastify/fastify";
 declare module "fastify" {
   interface FastifyRequest {
     user?: {
-      userId: string;
+      // Add more properties as needed
     };
   }
 }

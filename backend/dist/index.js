@@ -42,8 +42,15 @@ const autoload_1 = __importDefault(require("@fastify/autoload"));
 const cors_1 = __importDefault(require("@fastify/cors"));
 const path_1 = require("path");
 const fastify_2 = require("@clerk/fastify");
+const swagger_1 = __importDefault(require("@fastify/swagger"));
+const swagger_ui_1 = __importDefault(require("@fastify/swagger-ui"));
 const dotenv = __importStar(require("dotenv"));
+const swaggerconfig_1 = __importDefault(require("./swaggerconfig"));
 dotenv.config();
+const clerkOptions = {
+    publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
+    secretKey: process.env.CLERK_SECRET_KEY,
+};
 const envToLogger = {
     development: {
         transport: {
@@ -57,10 +64,30 @@ const envToLogger = {
     production: true,
     test: false,
 };
-const environment = "development"; // Replace "development" with the actual environment value
+const environment = "development";
+const schemaConfig = {
+    schema: {
+        description: "This returns jokes",
+        tags: ["JOKE"],
+        summary: "This returns a different joke every time this is called",
+        operationId: "get-joke",
+        response: {
+            200: {
+                description: "Successful Response",
+                type: "object",
+                properties: {
+                    joke: { type: "string" },
+                },
+            },
+        },
+    },
+};
 const fastify = (0, fastify_1.default)({
     logger: (_a = envToLogger[environment]) !== null && _a !== void 0 ? _a : true,
 });
+fastify.register(fastify_2.clerkPlugin, clerkOptions);
+fastify.register(swagger_1.default, swaggerconfig_1.default);
+fastify.register(swagger_ui_1.default);
 fastify.register(cors_1.default, {
     allowedHeaders: "*",
     methods: "*",
@@ -68,33 +95,10 @@ fastify.register(cors_1.default, {
 fastify.register(autoload_1.default, {
     dir: (0, path_1.join)(__dirname, "./routes"),
 });
-const clerkOptions = {
-    publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
-    secretKey: process.env.CLERK_SECRET_KEY,
-};
-fastify.register(fastify_2.clerkPlugin, clerkOptions);
+// fastify.register(autoLoad, {
+//   dir: join(__dirname, './plugins'),
+// });
 (0, db_1.default)();
-fastify.get("/private", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b;
-    const token = (_b = req.headers.authorization) === null || _b === void 0 ? void 0 : _b.replace("Bearer ", "");
-    // console.log(req.headers.authorization);
-    if (!token)
-        return res.status(401).send({
-            message: "unauthorized",
-        });
-    try {
-        const verifiedToken = yield (0, fastify_2.verifyToken)(token, {
-            apiUrl: "https://api.clerk.com",
-            secretKey: process.env.CLERK_SECRET_KEY,
-            jwtKey: process.env.CLERK_PEM_PUBLIC_KEY,
-            audience: process.env.CLERK_PUBLISHABLE_KEY,
-        });
-        return { verifiedToken: verifiedToken };
-    }
-    catch (error) {
-        console.log("error", error);
-    }
-}));
 fastify.get("/ping", (request, reply) => __awaiter(void 0, void 0, void 0, function* () {
     return reply.send({ message: "ping" });
 }));
